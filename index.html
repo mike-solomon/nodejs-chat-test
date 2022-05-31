@@ -56,6 +56,9 @@
     </style>
   </head>
   <body>
+    <h2>Users:</h2>
+    <ul id="users"></ul>
+    <h2>Chat:</h2>
     <ul id="messages"></ul>
     <form id="form" action="">
       <input id="input" autocomplete="off" /><button>Send</button>
@@ -65,6 +68,7 @@
     <script>
       var socket = io();
 
+      var users = document.getElementById("users");
       var messages = document.getElementById("messages");
       var form = document.getElementById("form");
       var input = document.getElementById("input");
@@ -88,6 +92,24 @@
         item.textContent = msg;
         messages.appendChild(item);
         window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on("new user", function (user) {
+        var newUser = document.createElement("li");
+        newUser.setAttribute("id", user);
+        newUser.textContent = user;
+        users.appendChild(newUser);
+      });
+
+      socket.on("change nickname", function (oldNickname, newNickname) {
+        var userToChange = document.getElementById(oldNickname);
+        userToChange.setAttribute("id", newNickname);
+        userToChange.textContent = newNickname;
+      });
+
+      socket.on("user disconnected", function (user) {
+        var userToRemove = document.getElementById(user);
+        users.removeChild(userToRemove);
       });
     </script>
   </body>

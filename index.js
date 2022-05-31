@@ -19,12 +19,14 @@ socketIOServer.on("connection", (socket) => {
 
   console.log("A user connected!");
   console.log("Number of active clients:", socketIOServer.engine.clientsCount);
+  socketIOServer.emit("new user", nickname);
   socketIOServer.emit("chat message", `${nickname} joined the chat`);
 
   socket.on("change nickname", (newNickname) => {
     console.log(
       `User ${nickname} requested nickname change to: ${newNickname}`
     );
+    socketIOServer.emit("change nickname", nickname, newNickname);
     socketIOServer.emit(
       "chat message",
       `${nickname} changed their name to ${newNickname}`
@@ -35,6 +37,7 @@ socketIOServer.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log(`${nickname} left the chat`);
     socketIOServer.emit("chat message", `${nickname} left the chat`);
+    socketIOServer.emit("user disconnected", nickname);
   });
 
   socket.on("chat message", (msg) => {
