@@ -2,6 +2,15 @@ const app = require("express")();
 const httpServer = require("http").Server(app);
 const socketIOServer = require("socket.io")(httpServer);
 const port = process.env.PORT || 3000;
+const { Trie } = require("@datastructures-js/trie");
+
+const badwordDictionary = new Trie();
+
+const setupBadWords = () => {
+  badwordDictionary.insert("hi");
+};
+
+setupBadWords();
 
 app.get("/", (request, response) => {
   response.sendFile(__dirname + "/index.html");
@@ -42,7 +51,26 @@ socketIOServer.on("connection", (socket) => {
 
   socket.on("chat message", (msg) => {
     console.log("Received message:", msg);
-    socketIOServer.emit("chat message", `${nickname}: ${msg}`);
+
+    let finalMsg = "";
+    let splitStr = msg.split(" ");
+    console.log(`splitStr: ${splitStr}`);
+
+    for (let i = 0; i < splitStr.length; i++) {
+      let s = splitStr[i];
+      console.log(`str = ${s}`);
+
+      if (badwordDictionary.has(s)) {
+        console.log(`Woah we found a bad word! It was ${s}. Changing message`);
+        finalMsg += " ***";
+      } else {
+        finalMsg += ` ${s}`;
+      }
+
+      console.log(`finalMsg: ${finalMsg}`);
+    }
+
+    socketIOServer.emit("chat message", `${nickname}: ${finalMsg}`);
   });
 });
 
