@@ -14,34 +14,38 @@ server.listen(port, function () {
   );
 });
 
-// List of connected clients
-let sockets = [];
+const sendDataToOtherClients = (client, data) => {
+  clients
+    .filter((c) => c !== client)
+    .forEach((c) => {
+      c.write(c.remoteAddress + ":" + c.remotePort + " said " + data + "\n");
+    });
+};
 
 // When a client requests a connection with the server, the server creates a new
 // socket dedicated to that client.
-server.on("connection", function (sock) {
-  console.log("CONNECTED: " + sock.remoteAddress + ":" + sock.remotePort);
-  sockets.push(sock);
+server.on("connection", function (client) {
+  console.log("CONNECTED: " + client.remoteAddress + ":" + client.remotePort);
+  clients.push(client);
+  sendDataToOtherClients(
+    client,
+    `A new client joined from ${client.remoteAddress} + : + ${client.remotePort}`
+  );
 
-  sock.on("data", function (data) {
-    console.log("DATA " + sock.remoteAddress + ": " + data);
-    // Write the data back to all the connected, the client will receive it as data from the server
-    sockets.forEach(function (sock, index, array) {
-      sock.write(
-        sock.remoteAddress + ":" + sock.remotePort + " said " + data + "\n"
-      );
-    });
+  client.on("data", function (data) {
+    console.log("DATA " + client.remoteAddress + ": " + data);
+    sendDataToOtherClients(client, data);
   });
 
   // Add a 'close' event handler to this instance of socket
-  sock.on("close", function (data) {
-    let index = sockets.findIndex(function (o) {
+  client.on("close", function (data) {
+    let index = clients.findIndex(function (o) {
       return (
-        o.remoteAddress === sock.remoteAddress &&
-        o.remotePort === sock.remotePort
+        o.remoteAddress === client.remoteAddress &&
+        o.remotePort === client.remotePort
       );
     });
-    if (index !== -1) sockets.splice(index, 1);
-    console.log("CLOSED: " + sock.remoteAddress + " " + sock.remotePort);
+    if (index !== -1) clients.splice(index, 1);
+    console.log("CLOSED: " + client.remoteAddress + " " + client.remotePort);
   });
 });
